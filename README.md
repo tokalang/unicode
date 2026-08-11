@@ -1,6 +1,7 @@
-# `official/unicode` v1
+# `official/unicode` v2 development
 
-Status: **`0.1.0` release candidate (not yet published)**.
+Status: **`0.2.0-dev.0`**. `0.1.0` is published; this branch develops the
+property API needed by the next regex release.
 
 `official/unicode` provides deterministic, pure-Toka extended-grapheme
 segmentation. Its package identity and public import path are
@@ -44,6 +45,28 @@ grapheme indexes, and `grapheme_slice` is a zero-copy `str` view.
 Each operation scans in `O(input_bytes)` time with bounded state and does not
 allocate. v1 intentionally excludes normalization, case folding, collation,
 word/sentence/line breaking, bidi layout, font shaping, and IME policy.
+
+v2 adds `O(log ranges)` code-point queries generated from pinned Unicode 17.0.0
+data. `general_category` and `script` return exported integer constants; the
+binary queries cover `Alphabetic`, `Lowercase`, `Uppercase`, `White_Space`,
+`XID_Start`, and `XID_Continue`.
+
+```toka
+import official/unicode::{
+    GENERAL_CATEGORY_UPPERCASE_LETTER,
+    SCRIPT_GREEK,
+    general_category,
+    is_white_space,
+    script
+}
+
+assert(general_category('A' as Char32) == GENERAL_CATEGORY_UPPERCASE_LETTER)
+assert(script(0x3BB:Char32) == SCRIPT_GREEK)
+assert(is_white_space(0x2003:Char32))
+```
+
+Property-name parsing, normalization, and case folding remain out of scope;
+regex will map its supported `\\p{...}` spellings to these primitives.
 
 ## Reproducibility and qualification
 

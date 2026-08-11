@@ -19,7 +19,8 @@ import sys
 PACKAGE = Path(__file__).resolve().parents[1]
 DATA = PACKAGE / "data" / "17.0.0"
 LOCK = DATA / "SOURCES.lock.json"
-TABLES = PACKAGE / "lib" / "official" / "unicode" / "generated" / "grapheme_tables.tk"
+GRAPHEME_TABLES = PACKAGE / "lib" / "official" / "unicode" / "generated" / "grapheme_tables.tk"
+PROPERTY_TABLES = PACKAGE / "lib" / "official" / "unicode" / "generated" / "property_tables.tk"
 CORPUS = PACKAGE / "tests" / "grapheme_break_corpus.tk"
 
 
@@ -46,6 +47,48 @@ INCB_CODES = {
     "Extend": "INCB_EXTEND",
     "Linker": "INCB_LINKER",
 }
+
+GENERAL_CATEGORY_CODES = {
+    "Cn": "GENERAL_CATEGORY_UNASSIGNED",
+    "Lu": "GENERAL_CATEGORY_UPPERCASE_LETTER",
+    "Ll": "GENERAL_CATEGORY_LOWERCASE_LETTER",
+    "Lt": "GENERAL_CATEGORY_TITLECASE_LETTER",
+    "Lm": "GENERAL_CATEGORY_MODIFIER_LETTER",
+    "Lo": "GENERAL_CATEGORY_OTHER_LETTER",
+    "Mn": "GENERAL_CATEGORY_NONSPACING_MARK",
+    "Mc": "GENERAL_CATEGORY_SPACING_MARK",
+    "Me": "GENERAL_CATEGORY_ENCLOSING_MARK",
+    "Nd": "GENERAL_CATEGORY_DECIMAL_NUMBER",
+    "Nl": "GENERAL_CATEGORY_LETTER_NUMBER",
+    "No": "GENERAL_CATEGORY_OTHER_NUMBER",
+    "Pc": "GENERAL_CATEGORY_CONNECTOR_PUNCTUATION",
+    "Pd": "GENERAL_CATEGORY_DASH_PUNCTUATION",
+    "Ps": "GENERAL_CATEGORY_OPEN_PUNCTUATION",
+    "Pe": "GENERAL_CATEGORY_CLOSE_PUNCTUATION",
+    "Pi": "GENERAL_CATEGORY_INITIAL_PUNCTUATION",
+    "Pf": "GENERAL_CATEGORY_FINAL_PUNCTUATION",
+    "Po": "GENERAL_CATEGORY_OTHER_PUNCTUATION",
+    "Sm": "GENERAL_CATEGORY_MATH_SYMBOL",
+    "Sc": "GENERAL_CATEGORY_CURRENCY_SYMBOL",
+    "Sk": "GENERAL_CATEGORY_MODIFIER_SYMBOL",
+    "So": "GENERAL_CATEGORY_OTHER_SYMBOL",
+    "Zs": "GENERAL_CATEGORY_SPACE_SEPARATOR",
+    "Zl": "GENERAL_CATEGORY_LINE_SEPARATOR",
+    "Zp": "GENERAL_CATEGORY_PARAGRAPH_SEPARATOR",
+    "Cc": "GENERAL_CATEGORY_CONTROL",
+    "Cf": "GENERAL_CATEGORY_FORMAT",
+    "Cs": "GENERAL_CATEGORY_SURROGATE",
+    "Co": "GENERAL_CATEGORY_PRIVATE_USE",
+}
+
+BINARY_PROPERTIES = (
+    ("DerivedCoreProperties.txt", "Alphabetic", "is_alphabetic"),
+    ("DerivedCoreProperties.txt", "Lowercase", "is_lowercase"),
+    ("DerivedCoreProperties.txt", "Uppercase", "is_uppercase"),
+    ("PropList.txt", "White_Space", "is_white_space"),
+    ("DerivedCoreProperties.txt", "XID_Start", "is_xid_start"),
+    ("DerivedCoreProperties.txt", "XID_Continue", "is_xid_continue"),
+)
 
 
 @dataclass(frozen=True)
@@ -149,6 +192,56 @@ def read_extended_pictographic() -> list[Range]:
     return merge_ranges(ranges)
 
 
+def read_general_categories() -> list[Range]:
+    ranges: list[Range] = []
+    pending_start: int | None = None
+    pending_category: str | None = None
+    for fields in data_fields(DATA / "UnicodeData.txt"):
+        if len(fields) < 3:
+            raise ValueError("malformed UnicodeData.txt row")
+        point = int(fields[0], 16)
+        name = fields[1]
+        category = fields[2]
+        if category not in GENERAL_CATEGORY_CODES:
+            raise ValueError("unknown General_Category value: %s" % category)
+        if name.endswith(", First>"):
+            if pending_start is not None:
+                raise ValueError("nested UnicodeData range starting at U+%04X" % point)
+            pending_start = point
+            pending_category = category
+        elif name.endswith(", Last>"):
+            if pending_start is None or pending_category != category:
+                raise ValueError("mismatched UnicodeData range ending at U+%04X" % point)
+            ranges.append(Range(pending_start, point, GENERAL_CATEGORY_CODES[category]))
+            pending_start = None
+            pending_category = None
+        else:
+            ranges.append(Range(point, point, GENERAL_CATEGORY_CODES[category]))
+    if pending_start is not None:
+        raise ValueError("unterminated UnicodeData range starting at U+%04X" % pending_start)
+    return merge_ranges(ranges)
+
+
+def read_scripts() -> list[Range]:
+    ranges: list[Range] = []
+    for fields in data_fields(DATA / "Scripts.txt"):
+        start, end = parse_range(fields[0])
+        ranges.append(Range(start, end, fields[1]))
+    return merge_ranges(ranges)
+
+
+def read_binary_property(filename: str, property_name: str) -> list[Range]:
+    ranges: list[Range] = []
+    for fields in data_fields(DATA / filename):
+        if fields[1] != property_name:
+            continue
+        start, end = parse_range(fields[0])
+        ranges.append(Range(start, end, "1"))
+    if not ranges:
+        raise ValueError("missing binary property %s in %s" % (property_name, filename))
+    return merge_ranges(ranges)
+
+
 def render_ranges(name: str, shape: str, ranges: list[Range]) -> str:
     rows = ",\n".join(
         "    %s(start = 0x%X:u32, end = 0x%X:u32, kind = %s)" %
@@ -243,6 +336,94 @@ pub fn is_extended_pictographic(cp: Char32) -> bool {
     return false
 }
 """
+
+
+def script_constant(name: str) -> str:
+    return "SCRIPT_" + name.upper().replace("-", "_")
+
+
+def render_lookup(function_name: str, ranges_name: str, default: str) -> str:
+    return """pub fn %s(cp: Char32) -> i32 {
+    auto low# = 0:usize
+    auto high# = %s_COUNT:usize
+    loop low < high {
+        auto middle = low + ((high - low) / 2:usize)
+        auto range = %s[middle]
+        if cp < range.start {
+            high = middle
+        } else if cp > range.end {
+            low = middle + 1:usize
+        } else {
+            return range.kind
+        }
+    }
+    return %s
+}
+""" % (function_name, ranges_name, ranges_name, default)
+
+
+def render_binary_lookup(function_name: str, ranges_name: str) -> str:
+    return """pub fn %s(cp: Char32) -> bool {
+    auto low# = 0:usize
+    auto high# = %s_COUNT:usize
+    loop low < high {
+        auto middle = low + ((high - low) / 2:usize)
+        auto range = %s[middle]
+        if cp < range.start {
+            high = middle
+        } else if cp > range.end {
+            low = middle + 1:usize
+        } else {
+            return true
+        }
+    }
+    return false
+}
+""" % (function_name, ranges_name, ranges_name)
+
+
+def render_property_tables(
+    categories: list[Range], scripts: list[Range], binary_properties: list[tuple[str, list[Range]]],
+) -> str:
+    script_names = ["Unknown"] + sorted({item.kind for item in scripts})
+    script_codes = {name: script_constant(name) for name in script_names}
+    script_ranges = [Range(item.start, item.end, script_codes[item.kind]) for item in scripts]
+    category_constants = "".join(
+        "pub const %s: i32 = %d:i32\n" % (name, index)
+        for index, name in enumerate(GENERAL_CATEGORY_CODES.values())
+    )
+    script_constants = "".join(
+        "pub const %s: i32 = %d:i32\n" % (script_codes[name], index)
+        for index, name in enumerate(script_names)
+    )
+    output = [
+        "// Generated by official/unicode/tools/generate_tables.py. DO NOT EDIT.",
+        "// Source: Unicode 17.0.0 UnicodeData.txt, Scripts.txt, DerivedCoreProperties.txt, and PropList.txt.",
+        "",
+        "import core/types::{Char32, usize}",
+        "",
+        category_constants.rstrip(),
+        "",
+        script_constants.rstrip(),
+        "",
+        "shape PropertyRange(start: Char32, end: Char32, kind: i32)",
+        "",
+        render_ranges("GENERAL_CATEGORY_RANGES", "PropertyRange", categories).rstrip(),
+        "",
+        render_ranges("SCRIPT_RANGES", "PropertyRange", script_ranges).rstrip(),
+    ]
+    for function_name, ranges in binary_properties:
+        ranges_name = function_name.upper() + "_RANGES"
+        output.extend(["", render_ranges(ranges_name, "PropertyRange", ranges).rstrip()])
+    output.extend([
+        "",
+        render_lookup("general_category", "GENERAL_CATEGORY_RANGES", "GENERAL_CATEGORY_UNASSIGNED").rstrip(),
+        "",
+        render_lookup("script", "SCRIPT_RANGES", "SCRIPT_UNKNOWN").rstrip(),
+    ])
+    for function_name, _ in binary_properties:
+        output.extend(["", render_binary_lookup(function_name, function_name.upper() + "_RANGES").rstrip()])
+    return "\n".join(output) + "\n"
 
 
 def utf8_len(codepoint: int) -> int:
@@ -359,7 +540,20 @@ def main() -> int:
     try:
         lock = load_lock()
         verify_sources(lock)
-        write_or_check(TABLES, render_tables(read_gcb(), read_incb(), read_extended_pictographic()), arguments.check)
+        write_or_check(
+            GRAPHEME_TABLES,
+            render_tables(read_gcb(), read_incb(), read_extended_pictographic()),
+            arguments.check,
+        )
+        binary_properties = [
+            (function_name, read_binary_property(filename, property_name))
+            for filename, property_name, function_name in BINARY_PROPERTIES
+        ]
+        write_or_check(
+            PROPERTY_TABLES,
+            render_property_tables(read_general_categories(), read_scripts(), binary_properties),
+            arguments.check,
+        )
         write_or_check(CORPUS, render_corpus(read_corpus()), arguments.check)
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print("FAIL: %s" % error, file=sys.stderr)
