@@ -142,7 +142,7 @@ def main() -> int:
         shutil.copytree(PACKAGE, dependency)
         environment["TOKA_LIB"] = str(sdk)
 
-        for fixture in ("unicode_v1.tk", "grapheme_break_corpus.tk"):
+        for fixture in ("unicode_v1.tk", "unicode_properties_v2.tk", "grapheme_break_corpus.tk"):
             executable = work / fixture.removesuffix(".tk")
             run([
                 str(tokac), "-I", str(sdk), "-I", str(dependency / "lib"),
@@ -183,6 +183,7 @@ def main() -> int:
         "stages": {
             "locked_unicode_data": "pass",
             "unicode_api_suite": "pass",
+            "unicode_property_api_suite": "pass",
             "uax29_grapheme_break_corpus": "pass",
             "locked_local_dependency": "pass",
             "offline_lock_replay": "pass",

@@ -2,7 +2,7 @@
 pub const PACKAGE = (
     name = "unicode",
     identity = "official/unicode",
-    version = "0.1.0",
+    version = "0.2.0-dev.0",
     kind = "library",
     license = "Apache-2.0 AND Unicode-3.0",
     compiler = "1.0.0-rc.1",
@@ -14,9 +14,9 @@ pub const PACKAGE = (
 
 pub const AI_CONTRACT = (
     schema = "toka-official-package-v1",
-    summary = "Pinned Unicode extended-grapheme segmentation without native or host dependencies.",
-    capabilities = ("validate UTF-8", "count extended grapheme clusters", "map grapheme indexes and UTF-8 byte offsets", "return zero-copy grapheme slices"),
-    non_goals = ("normalization", "case folding", "word sentence or line breaking", "bidi layout", "font shaping", "host ICU integration"),
+    summary = "Pinned Unicode grapheme segmentation and code-point property queries without native or host dependencies.",
+    capabilities = ("validate UTF-8", "count extended grapheme clusters", "map grapheme indexes and UTF-8 byte offsets", "return zero-copy grapheme slices", "query General_Category", "query Script", "query selected binary properties"),
+    non_goals = ("normalization", "case folding", "word sentence or line breaking", "bidi layout", "font shaping", "host ICU integration", "property-name parsing"),
     safety = ("malformed UTF-8 returns UnicodeError; valid request-boundary misses return Option::None; segmentation uses vendored Unicode 17.0.0 data"),
     qualification = ("python3 tests/qualify_package.py")
 )

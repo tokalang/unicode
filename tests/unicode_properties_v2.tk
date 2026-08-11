@@ -1,0 +1,47 @@
+import core/types::{Char32}
+import official/unicode/properties::{
+    GENERAL_CATEGORY_DECIMAL_NUMBER,
+    GENERAL_CATEGORY_LOWERCASE_LETTER,
+    GENERAL_CATEGORY_NONSPACING_MARK,
+    GENERAL_CATEGORY_OTHER_SYMBOL,
+    GENERAL_CATEGORY_UNASSIGNED,
+    GENERAL_CATEGORY_UPPERCASE_LETTER,
+    SCRIPT_COMMON,
+    SCRIPT_GREEK,
+    SCRIPT_HAN,
+    SCRIPT_INHERITED,
+    SCRIPT_LATIN,
+    SCRIPT_UNKNOWN,
+    general_category,
+    is_alphabetic,
+    is_lowercase,
+    is_uppercase,
+    is_white_space,
+    is_xid_continue,
+    is_xid_start,
+    script
+}
+
+fn main() -> i32 {
+    if general_category('A' as Char32) != GENERAL_CATEGORY_UPPERCASE_LETTER { return 1 }
+    if general_category(0x3BB:Char32) != GENERAL_CATEGORY_LOWERCASE_LETTER { return 2 }
+    if general_category(0x308:Char32) != GENERAL_CATEGORY_NONSPACING_MARK { return 3 }
+    if general_category('3' as Char32) != GENERAL_CATEGORY_DECIMAL_NUMBER { return 4 }
+    if general_category(0x1F600:Char32) != GENERAL_CATEGORY_OTHER_SYMBOL { return 5 }
+    if general_category(0x378:Char32) != GENERAL_CATEGORY_UNASSIGNED { return 6 }
+
+    if script('A' as Char32) != SCRIPT_LATIN { return 7 }
+    if script(0x3BB:Char32) != SCRIPT_GREEK { return 8 }
+    if script(0x4E00:Char32) != SCRIPT_HAN { return 9 }
+    if script('!' as Char32) != SCRIPT_COMMON { return 10 }
+    if script(0x308:Char32) != SCRIPT_INHERITED { return 11 }
+    if script(0x378:Char32) != SCRIPT_UNKNOWN { return 12 }
+
+    if !is_alphabetic('A' as Char32) || is_alphabetic('3' as Char32) { return 13 }
+    if !is_lowercase(0x3BB:Char32) || is_lowercase('A' as Char32) { return 14 }
+    if !is_uppercase('A' as Char32) || is_uppercase(0x3BB:Char32) { return 15 }
+    if !is_white_space(0x2003:Char32) || is_white_space(0x200B:Char32) { return 16 }
+    if !is_xid_start('A' as Char32) || is_xid_start('3' as Char32) { return 17 }
+    if !is_xid_continue('3' as Char32) || !is_xid_continue('_' as Char32) { return 18 }
+    return 0
+}

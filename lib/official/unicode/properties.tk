@@ -1,0 +1,6 @@
+// Unicode 17.0.0 code-point property queries.
+//
+// This module is separate from official/unicode so grapheme-only consumers do
+// not compile the generated General_Category and Script tables.
+
+pub import official/unicode/generated/property_tables::*
