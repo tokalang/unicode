@@ -1,6 +1,6 @@
 # `official/unicode` v1
 
-Status: **standalone development (`0.1.0-dev.0`); not yet released**.
+Status: **`0.1.0` release candidate (not yet published)**.
 
 `official/unicode` provides deterministic, pure-Toka extended-grapheme
 segmentation. Its package identity and public import path are
@@ -65,6 +65,7 @@ The implementation code is Apache-2.0; vendored Unicode data is covered by
 the Unicode License v3. See the headers and upstream terms accompanying the
 vendored data.
 
-This repository is the canonical source for the first standalone release. Its
-release gate will require a tagged GitHub Release, immutable static-registry
-catalog record, and fresh default-registry offline replay.
+This repository is the canonical source for the first standalone release. The
+source is frozen for the immutable `0.1.0` release; it is not yet a registry
+release. The exact release evidence required to promote it is in
+[the 0.1 release gate](docs/release_0_1.md).
