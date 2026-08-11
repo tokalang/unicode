@@ -1,5 +1,5 @@
 import core/types::{Char32}
-import official/unicode::{
+import official/unicode/properties::{
     GENERAL_CATEGORY_DECIMAL_NUMBER,
     GENERAL_CATEGORY_LOWERCASE_LETTER,
     GENERAL_CATEGORY_NONSPACING_MARK,

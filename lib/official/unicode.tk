@@ -32,7 +32,6 @@ import official/unicode/generated/grapheme_tables::{
 }
 
 pub import core/str::{UnicodeError}
-pub import official/unicode/generated/property_tables::*
 
 shape Scalar (
     cp: Char32,

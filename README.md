@@ -52,7 +52,7 @@ binary queries cover `Alphabetic`, `Lowercase`, `Uppercase`, `White_Space`,
 `XID_Start`, and `XID_Continue`.
 
 ```toka
-import official/unicode::{
+import official/unicode/properties::{
     GENERAL_CATEGORY_UPPERCASE_LETTER,
     SCRIPT_GREEK,
     general_category,
@@ -66,7 +66,9 @@ assert(is_white_space(0x2003:Char32))
 ```
 
 Property-name parsing, normalization, and case folding remain out of scope;
-regex will map its supported `\\p{...}` spellings to these primitives.
+regex will map its supported `\\p{...}` spellings to these primitives. Import
+`official/unicode` for grapheme-only work and `official/unicode/properties`
+when code-point properties are needed.
 
 ## Reproducibility and qualification
 
