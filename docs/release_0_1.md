@@ -1,24 +1,28 @@
-# `official/unicode` 0.1 release gate
+# `official/unicode` 0.1 release history
 
-`0.1.0` is the frozen first standalone release: deterministic Unicode 17.0.0
-extended-grapheme segmentation with pinned source data, generated tables, and
-the complete UAX #29 revision 47 corpus. No public API is added after this
-gate without starting a new development version.
+## `0.1.1`
 
-Before publishing:
+`0.1.1` is the packaging-corrected successor to `0.1.0`. It makes no public
+API, Unicode data, generated-table, or corpus change. Its release archive adds
+the Apache-2.0 and Unicode-3.0 license texts, the pinned Unicode 17.0.0 source
+data, and the deterministic generator required by package qualification.
 
-1. Run `TOKA_ROOT=/path/to/toka python3 tests/qualify_package.py` from a clean
-   checkout on Linux x64 and macOS arm64. Record the exact source commit.
-2. Verify `python3 tools/generate_tables.py --check` proves that the checked-in
-   tables and corpus are reproducible from `data/17.0.0/SOURCES.lock.json`.
-3. Create annotated tag `v0.1.0` at the qualified main commit and attach the
-   deterministic `unicode-0.1.0.tar.gz` archive to its GitHub Release.
-4. Calculate the archive SHA-256 and submit a reviewed static catalog PR for
-   `pkg.tokalang.dev`. The entry must retain all older versions and name the
-   exact tag, asset URL, and immutable digest.
-5. In a fresh consumer using the default registry, resolve exact `0.1.0`, then
-   prove `TOKA_OFFLINE=1 toka fetch/build/run` replays the lock unchanged.
+The maintenance gate is:
 
-Publication needs source-repository and catalog authority. `toka publish`
-creates the archive; it does not replace the tagged-release plus reviewed
-catalog workflow.
+1. qualify the exact archive with the locked Toka `v1.0.0-rc.4` SDK on Linux
+   x64 and macOS arm64;
+2. prove regeneration is clean against `data/17.0.0/SOURCES.lock.json`;
+3. prove the archive member allowlist is exact and contains no AppleDouble,
+   symbolic-link, absolute-path, or parent-traversal entry;
+4. publish an annotated `v0.1.1` tag and immutable GitHub Release archive;
+5. retain `0.1.0` in the catalog, add `0.1.1`, and verify a fresh exact-version
+   online and archive-only offline consumer replay.
+
+## `0.1.0`
+
+`0.1.0` is the immutable first standalone release of the deterministic Unicode
+17.0.0 UAX #29 revision 47 extended-grapheme segmenter. Its source, tag,
+release archive, and catalog record remain historical evidence and are never
+rewritten. `0.1.1` supersedes it only for new locks because the original
+archive omitted license, source-data, and generator files and carried macOS
+AppleDouble metadata.

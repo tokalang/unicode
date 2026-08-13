@@ -5,67 +5,79 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TOKA_VERSION: v1.0.0-rc.4
 
 jobs:
   qualify:
     name: Standalone package qualification (${{ matrix.name }})
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: linux-x64
             runner: ubuntu-22.04
+            asset: toka-v1.0.0-rc.4-linux-x64.tar.gz
+            sha256: fee16678f67bb88ace9b0f31603f9b56a24802de6d16a5bca60b3714dd4d30f6
           - name: macos-arm64
             runner: macos-15
+            asset: toka-v1.0.0-rc.4-macos-arm64.tar.gz
+            sha256: f5e9043af6f650bca42e95d22fda28c6814413faa4bf9478decfeb884d4d0866
     steps:
       - name: Check out package
         uses: actions/checkout@v4
 
-      - name: Check out Toka toolchain
-        uses: actions/checkout@v4
-        with:
-          repository: tokalang/toka
-          ref: main
-          path: toka
-
-      - name: Install LLVM 20 (Linux)
+      - name: Install Linux runtime dependencies
         if: runner.os == 'Linux'
         run: |
           set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          sudo -E apt-get update -o Acquire::Retries=5
-          sudo apt-get install -y build-essential cmake ninja-build lsb-release software-properties-common
-          wget --timeout=15 --tries=3 https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo -E ./llvm.sh 20
-          sudo apt-get install -y liblld-20-dev lld-20 libpolly-20-dev libzstd-dev libssl-dev
+          sudo apt-get update -o Acquire::Retries=5
+          sudo apt-get install -y libssl3 zlib1g libzstd1 libstdc++6 libgcc-s1
 
-      - name: Install LLVM 20 (macOS)
+      - name: Install macOS runtime dependencies
         if: runner.os == 'macOS'
+        run: brew install lld@20 zstd openssl@3
+
+      - name: Install locked Toka SDK
         run: |
           set -euo pipefail
-          brew install llvm@20 lld@20 zstd openssl@3
-          echo "$(brew --prefix llvm@20)/bin" >> "$GITHUB_PATH"
-          echo "LLVM_DIR=$(brew --prefix llvm@20)/lib/cmake/llvm" >> "$GITHUB_ENV"
-          echo "LLD_DIR=$(brew --prefix lld@20)/lib/cmake/lld" >> "$GITHUB_ENV"
-          echo "ZSTD_LIBRARY=$(brew --prefix zstd)/lib/libzstd.dylib" >> "$GITHUB_ENV"
-          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
+          archive="$RUNNER_TEMP/${{ matrix.asset }}"
+          curl --fail --location --retry 3 \
+            --output "$archive" \
+            "https://github.com/tokalang/toka/releases/download/$TOKA_VERSION/${{ matrix.asset }}"
+          echo "${{ matrix.sha256 }}  $archive" | shasum -a 256 --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+          sdk="$RUNNER_TEMP/${{ matrix.asset }}"
+          sdk="${sdk%.tar.gz}"
+          test -x "$sdk/bin/toka"
+          test -x "$sdk/bin/tokac"
+          test -d "$sdk/lib"
+          "$sdk/bin/toka" --version | grep -F '1.0.0-rc.4'
+          "$sdk/bin/tokac" --version | grep -F '1.0.0-rc.4'
+          echo "TOKA=$sdk/bin/toka" >> "$GITHUB_ENV"
+          echo "TOKAC=$sdk/bin/tokac" >> "$GITHUB_ENV"
+          echo "TOKA_LIB=$sdk/lib" >> "$GITHUB_ENV"
 
-      - name: Build Toka tools
+      - name: Build and qualify the exact release archive
         run: |
           set -euo pipefail
-          cmake -S toka -B toka/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            ${LLVM_DIR:+-DLLVM_DIR="$LLVM_DIR"} \
-            ${LLD_DIR:+-DLLD_DIR="$LLD_DIR"} \
-            ${ZSTD_LIBRARY:+-DZSTD_LIBRARY="$ZSTD_LIBRARY"} \
-            ${OPENSSL_ROOT_DIR:+-DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR"}
-          cmake --build toka/build --target toka-tools --parallel 2
-
-      - name: Qualify standalone package
-        env:
-          TOKA_ROOT: ${{ github.workspace }}/toka
-        run: python3 tests/qualify_package.py
+          archive="$RUNNER_TEMP/unicode-0.1.1.tar.gz"
+          package_root="$RUNNER_TEMP/unicode-0.1.1"
+          python3 tools/build_release.py --output "$archive"
+          mkdir "$package_root"
+          tar -xzf "$archive" -C "$package_root"
+          cd "$package_root"
+          python3 tests/qualify_package.py
