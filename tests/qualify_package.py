@@ -13,10 +13,42 @@ import tempfile
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
+REQUIRED_PACKAGE_FILES = (
+    "LICENSE",
+    "LICENSE-UNICODE",
+    "README.md",
+    "package.tk",
+    "data/17.0.0/DerivedCoreProperties.txt",
+    "data/17.0.0/GraphemeBreakProperty.txt",
+    "data/17.0.0/GraphemeBreakTest.txt",
+    "data/17.0.0/SOURCES.lock.json",
+    "data/17.0.0/emoji-data.txt",
+    "tools/build_release.py",
+    "tools/generate_tables.py",
+)
 
 
 class QualificationError(RuntimeError):
     pass
+
+
+def verify_package_layout() -> None:
+    missing = [relative for relative in REQUIRED_PACKAGE_FILES
+               if not (PACKAGE / relative).is_file()]
+    if missing:
+        raise QualificationError("package is missing required release files: " + ", ".join(missing))
+
+    apple_double = sorted(
+        path.relative_to(PACKAGE).as_posix()
+        for path in PACKAGE.rglob("._*")
+    )
+    if apple_double:
+        raise QualificationError("package contains AppleDouble metadata: " + ", ".join(apple_double))
+
+    manifest = (PACKAGE / "package.tk").read_text(encoding="utf-8")
+    for required in ('version = "0.1.1"', 'compiler = "1.0.0-rc.4"'):
+        if required not in manifest:
+            raise QualificationError("package manifest is missing: " + required)
 
 
 def run(argv: list[str], *, cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
@@ -128,6 +160,7 @@ def fetch_diagnostics(project: Path, env: dict[str, str]) -> str:
 
 
 def main() -> int:
+    verify_package_layout()
     toka, tokac, library, source_root = resolve_toolchain()
 
     environment = dict(os.environ)

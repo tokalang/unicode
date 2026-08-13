@@ -1,6 +1,10 @@
 # `official/unicode` v1
 
-Status: **`0.1.0` release candidate (not yet published)**.
+Version: **`0.1.1`**.
+
+`0.1.1` is a packaging-only maintenance release. It keeps the `0.1.0`
+Unicode 17.0.0 API, data, generated tables, and corpus unchanged while adding
+complete license and reproducibility material to the release archive.
 
 `official/unicode` provides deterministic, pure-Toka extended-grapheme
 segmentation. Its package identity and public import path are
@@ -55,17 +59,22 @@ From this package root:
 
 ```text
 python3 tools/generate_tables.py --check
-python3 tests/qualify_package.py
+TOKA=/path/to/toka TOKAC=/path/to/tokac TOKA_LIB=/path/to/lib \
+  python3 tests/qualify_package.py
+python3 tools/build_release.py --output /tmp/unicode-0.1.1.tar.gz
 ```
 
 The qualification runs focused API tests, the complete UAX #29 corpus, and a
 locked offline consumer using `import official/unicode`.
 
-The implementation code is Apache-2.0; vendored Unicode data is covered by
-the Unicode License v3. See the headers and upstream terms accompanying the
-vendored data.
+The implementation code is covered by the [Apache License 2.0](LICENSE).
+Vendored Unicode data and its generated derivatives are covered by the
+[Unicode License v3](LICENSE-UNICODE); the source files retain their upstream
+headers as additional provenance.
 
-This repository is the canonical source for the first standalone release. The
-source is frozen for the immutable `0.1.0` release; it is not yet a registry
-release. The exact release evidence required to promote it is in
-[the 0.1 release gate](docs/release_0_1.md).
+This repository is the canonical source for standalone Unicode package
+releases. The immutable `0.1.0` release remains available for existing locks;
+new consumers should select `0.1.1`, whose archive includes the pinned source
+data, generator, qualification suite, and both license texts. Release history
+and maintenance evidence are recorded in
+[the 0.1 release history](https://github.com/tokalang/unicode/blob/main/docs/release_0_1.md).
