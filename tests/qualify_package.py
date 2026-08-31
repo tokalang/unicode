@@ -46,7 +46,7 @@ def verify_package_layout() -> None:
         raise QualificationError("package contains AppleDouble metadata: " + ", ".join(apple_double))
 
     manifest = (PACKAGE / "package.tk").read_text(encoding="utf-8")
-    for required in ('version = "0.1.1"', 'compiler = "1.0.0-rc.4"'):
+    for required in ('version = "0.1.2"', 'compiler = "1.0.0-rc.9"'):
         if required not in manifest:
             raise QualificationError("package manifest is missing: " + required)
 

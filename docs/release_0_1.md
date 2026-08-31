@@ -1,5 +1,14 @@
 # `official/unicode` 0.1 release history
 
+## `0.1.2`
+
+`0.1.2` is the Toka `1.0.0-rc.9` compatibility release. It preserves the
+public API and Unicode 17.0.0 data while migrating ownership-sensitive source
+and qualification helpers to the RC9 language rules.
+
+The release is qualified from its deterministic archive with the published
+Toka `v1.0.0-rc.9` SDK before catalog promotion.
+
 ## `0.1.1`
 
 `0.1.1` is the packaging-corrected successor to `0.1.0`. It makes no public

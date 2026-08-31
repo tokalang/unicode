@@ -2,10 +2,10 @@
 pub const PACKAGE = (
     name = "unicode",
     identity = "official/unicode",
-    version = "0.1.1",
+    version = "0.1.2",
     kind = "library",
     license = "Apache-2.0 AND Unicode-3.0",
-    compiler = "1.0.0-rc.4",
+    compiler = "1.0.0-rc.9",
     entry_modules = ("lib/official/unicode.tk"),
     targets = ("macos", "linux"),
     dependencies = (),

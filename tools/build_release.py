@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the deterministic official/unicode 0.1.1 release archive."""
+"""Build the deterministic official/unicode 0.1.2 release archive."""
 
 from __future__ import annotations
 
@@ -67,7 +67,7 @@ def validate_source() -> None:
     if missing:
         raise RuntimeError("release allowlist is missing files: " + ", ".join(missing))
     manifest = (ROOT / "package.tk").read_text(encoding="utf-8")
-    for required in ('version = "0.1.1"', 'compiler = "1.0.0-rc.4"'):
+    for required in ('version = "0.1.2"', 'compiler = "1.0.0-rc.9"'):
         if required not in manifest:
             raise RuntimeError("package manifest is missing: " + required)
 

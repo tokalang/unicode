@@ -1,8 +1,10 @@
 # `official/unicode` v1
 
-Version: **`0.1.1`**.
+Version: **`0.1.2` release candidate**.
 
-`0.1.1` is a packaging-only maintenance release. It keeps the `0.1.0`
+`0.1.2` updates the package for Toka `1.0.0-rc.9` ownership semantics while
+preserving the `0.1.1` API and Unicode 17.0.0 data set. `0.1.1` was a
+packaging-only maintenance release. It keeps the `0.1.0`
 Unicode 17.0.0 API, data, generated tables, and corpus unchanged while adding
 complete license and reproducibility material to the release archive.
 
@@ -61,7 +63,7 @@ From this package root:
 python3 tools/generate_tables.py --check
 TOKA=/path/to/toka TOKAC=/path/to/tokac TOKA_LIB=/path/to/lib \
   python3 tests/qualify_package.py
-python3 tools/build_release.py --output /tmp/unicode-0.1.1.tar.gz
+python3 tools/build_release.py --output /tmp/unicode-0.1.2.tar.gz
 ```
 
 The qualification runs focused API tests, the complete UAX #29 corpus, and a
@@ -74,7 +76,7 @@ headers as additional provenance.
 
 This repository is the canonical source for standalone Unicode package
 releases. The immutable `0.1.0` release remains available for existing locks;
-new consumers should select `0.1.1`, whose archive includes the pinned source
+new RC9 consumers should select `0.1.2`, whose archive includes the pinned source
 data, generator, qualification suite, and both license texts. Release history
 and maintenance evidence are recorded in
 [the 0.1 release history](https://github.com/tokalang/unicode/blob/main/docs/release_0_1.md).
