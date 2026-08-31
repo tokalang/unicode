@@ -70,6 +70,13 @@ fn unicode_error(text: str, position: usize) -> UnicodeError {
     )
 }
 
+fn detached_unicode_error(error: UnicodeError) -> UnicodeError {
+    return UnicodeError(
+        invalid_byte = error.invalid_byte,
+        position = error.position
+    )
+}
+
 fn is_control(gcb: i32) -> bool {
     return gcb == GCB_CONTROL || gcb == GCB_CR || gcb == GCB_LF
 }
@@ -252,7 +259,12 @@ pub fn grapheme_count(text: str) -> Result<usize, UnicodeError> {
     loop true {
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
-            return Result<usize, UnicodeError>::Err(cluster_result.unwrap_err())
+            match cede cluster_result {
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
+                    return Result<usize, UnicodeError>::Err(detached_unicode_error('error))
+                }
+                _ => unreachable
+            }
         }
         if cluster_result.unwrap().is_none() { break }
         count = count + 1:usize
@@ -267,7 +279,12 @@ pub fn grapheme_byte_offset(text: str, grapheme_index: usize) -> Result<Option<u
     loop true {
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
-            return Result<Option<usize>, UnicodeError>::Err(cluster_result.unwrap_err())
+            match cede cluster_result {
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
+                    return Result<Option<usize>, UnicodeError>::Err(detached_unicode_error('error))
+                }
+                _ => unreachable
+            }
         }
         auto cluster = cluster_result.unwrap()
         if cluster.is_none() { break }
@@ -290,7 +307,12 @@ pub fn grapheme_index_at_byte_offset(text: str, byte_offset: usize) -> Result<Op
     loop true {
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
-            return Result<Option<usize>, UnicodeError>::Err(cluster_result.unwrap_err())
+            match cede cluster_result {
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
+                    return Result<Option<usize>, UnicodeError>::Err(detached_unicode_error('error))
+                }
+                _ => unreachable
+            }
         }
         auto cluster = cluster_result.unwrap()
         if cluster.is_none() { break }
@@ -315,7 +337,12 @@ pub fn grapheme_slice(text: str, start: usize, end: usize) -> Result<Option<str>
     loop true {
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
-            return Result<Option<str>, UnicodeError>::Err(cluster_result.unwrap_err())
+            match cede cluster_result {
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
+                    return Result<Option<str>, UnicodeError>::Err(detached_unicode_error('error))
+                }
+                _ => unreachable
+            }
         }
         auto cluster = cluster_result.unwrap()
         if cluster.is_none() { break }

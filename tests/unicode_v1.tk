@@ -9,27 +9,28 @@ import official/unicode::{
     grapheme_slice
 }
 
-fn expect_some_offset(result: Result<Option<usize>, UnicodeError>, expected: usize) -> bool {
+fn expect_some_offset(cede result: Result<Option<usize>, UnicodeError>, expected: usize) -> bool {
     if result.is_err() { return false }
-    auto maybe = result.unwrap()
+    auto maybe = cede result.unwrap()
     match cede maybe {
         auto Option<usize>::Some('value) => return 'value == expected
         Option<usize>::None => return false
     }
 }
 
-fn expect_some_slice(result: Result<Option<str>, UnicodeError>, expected: str) -> bool {
+fn expect_some_slice(cede result: Result<Option<str>, UnicodeError>, expected: str) -> bool {
     if result.is_err() { return false }
-    auto maybe = result.unwrap()
+    auto maybe = cede result.unwrap()
     match cede maybe {
         auto Option<str>::Some('value) => return 'value.equals(expected)
         Option<str>::None => return false
     }
 }
 
-fn expect_no_slice(result: Result<Option<str>, UnicodeError>) -> bool {
+fn expect_no_slice(cede result: Result<Option<str>, UnicodeError>) -> bool {
     if result.is_err() { return false }
-    return result.unwrap().is_none()
+    auto maybe = cede result.unwrap()
+    return maybe.is_none()
 }
 
 fn test_offsets_and_slices() {
