@@ -260,8 +260,8 @@ pub fn grapheme_count(text: str) -> Result<usize, UnicodeError> {
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
             match cede cluster_result {
-                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
-                    return Result<usize, UnicodeError>::Err(detached_unicode_error('error))
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err(error) => {
+                    return Result<usize, UnicodeError>::Err(detached_unicode_error(error))
                 }
                 _ => unreachable
             }
@@ -280,8 +280,8 @@ pub fn grapheme_byte_offset(text: str, grapheme_index: usize) -> Result<Option<u
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
             match cede cluster_result {
-                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
-                    return Result<Option<usize>, UnicodeError>::Err(detached_unicode_error('error))
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err(error) => {
+                    return Result<Option<usize>, UnicodeError>::Err(detached_unicode_error(error))
                 }
                 _ => unreachable
             }
@@ -308,8 +308,8 @@ pub fn grapheme_index_at_byte_offset(text: str, byte_offset: usize) -> Result<Op
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
             match cede cluster_result {
-                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
-                    return Result<Option<usize>, UnicodeError>::Err(detached_unicode_error('error))
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err(error) => {
+                    return Result<Option<usize>, UnicodeError>::Err(detached_unicode_error(error))
                 }
                 _ => unreachable
             }
@@ -328,7 +328,10 @@ pub fn grapheme_index_at_byte_offset(text: str, byte_offset: usize) -> Result<Op
     return Result<Option<usize>, UnicodeError>::Ok(found)
 }
 
-pub fn grapheme_slice(text: str, start: usize, end: usize) -> Result<Option<str>, UnicodeError> {
+pub fn grapheme_slice(text: str, start: usize, end: usize) -> Result<Option<str>, UnicodeError>
+effects:
+    return <- text.buf
+{
     auto scanner# = GraphemeScanner::new(text)
     auto index# = 0:usize
     auto start_offset# = Option<usize>::None
@@ -338,8 +341,8 @@ pub fn grapheme_slice(text: str, start: usize, end: usize) -> Result<Option<str>
         auto cluster_result = scanner#.next_cluster()
         if cluster_result.is_err() {
             match cede cluster_result {
-                auto Result<Option<GraphemeRange>, UnicodeError>::Err('error) => {
-                    return Result<Option<str>, UnicodeError>::Err(detached_unicode_error('error))
+                auto Result<Option<GraphemeRange>, UnicodeError>::Err(error) => {
+                    return Result<Option<str>, UnicodeError>::Err(detached_unicode_error(error))
                 }
                 _ => unreachable
             }

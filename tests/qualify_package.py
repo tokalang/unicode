@@ -46,7 +46,7 @@ def verify_package_layout() -> None:
         raise QualificationError("package contains AppleDouble metadata: " + ", ".join(apple_double))
 
     manifest = (PACKAGE / "package.tk").read_text(encoding="utf-8")
-    for required in ('version = "0.1.2"', 'compiler = "1.0.0-rc.9"'):
+    for required in ('version = "0.1.2"', 'compiler = "0.10.0"'):
         if required not in manifest:
             raise QualificationError("package manifest is missing: " + required)
 
@@ -120,7 +120,7 @@ def write_consumer(project: Path, dependency: Path) -> None:
         '    if grapheme_count("ÄB").unwrap() != 2:usize { return 1 }\n'
         '    auto first = grapheme_slice("ÄB", 0:usize, 1:usize).unwrap()\n'
         "    match cede first {\n"
-        '        auto Option<str>::Some(\'value) => { if !\'value.equals("Ä") { return 2 } }\n'
+        '        auto Option<str>::Some(value) => { if !value.equals("Ä") { return 2 } }\n'
         "        Option<str>::None => return 2\n"
         "    }\n"
         "    return 0\n"
